@@ -2,7 +2,7 @@
 
 A full-stack drone fleet management app I built using PostgreSQL, Express, React, and Node (PERN stack).
 
-I already had a drone fleet API built with Spring Boot for one of my other projects (Cloud Fleet Microservices), so I wanted to rebuild the same idea using a JavaScript stack instead — same domain, different tech, so I could compare the two approaches and get more practice outside of Java.
+I already had a drone fleet API built with Spring Boot for one of my other projects (Cloud Fleet Microservices), so I wanted to rebuild the same idea using a JavaScript stack instead, same domain, different tech, so I could compare the two approaches and get more practice outside of Java.
 
 ## What it does
 
