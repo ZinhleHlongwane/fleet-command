@@ -1,164 +1,125 @@
-# 🛰️ Fleet Command
+# Fleet Command 🛰️
 
-A full-stack drone fleet dispatch and monitoring system, built with **PostgreSQL**, **Express (Node.js)**, and **React**.
+A full-stack drone fleet management app I built using PostgreSQL, Express, React, and Node (PERN stack).
 
-Operators can log in, watch every drone's live status and battery level on a dashboard, dispatch missions to a destination, and review each drone's mission history and telemetry log.
-
-> **Why this project:** it's the same "fleet management" domain as a drone-tracking API — reimagined here as a full PERN-stack app (PostgreSQL, Express, React, Node) with authentication, a relational schema, and a real UI on top, instead of a Spring Boot API alone. Good pairing for a portfolio: same idea, two different stacks.
-
----
+I already had a drone fleet API built with Spring Boot for one of my other projects (Cloud Fleet Microservices), so I wanted to rebuild the same idea using a JavaScript stack instead — same domain, different tech, so I could compare the two approaches and get more practice outside of Java.
 
 ## What it does
 
-- **Operators** register and log in (JWT-based auth, passwords hashed with bcrypt).
-- **Drones** have a call sign, model, status (`idle`, `in_mission`, `charging`, `maintenance`, `offline`), battery percentage, and an (x, y) position.
-- **Missions** send a drone to a destination. Creating a mission automatically flips the drone's status to `in_mission`; marking it `completed` or `aborted` frees the drone back to `idle`.
-- **Telemetry logs** record a time-stamped history of battery and position readings per drone, which also updates that drone's "live" row.
-- The dashboard is public to view (read-only), but creating drones, dispatching missions, and changing mission status requires being logged in.
-
----
+- Operators can register and log in (JWT auth, passwords hashed with bcrypt)
+- Drones have a call sign, model, status, battery %, and a position on a grid
+- You can dispatch a drone on a mission to a destination — this automatically updates the drone's status to `in_mission`
+- Marking a mission as completed or aborted frees the drone back up to `idle`
+- Each drone keeps a telemetry log (battery + position readings over time)
+- Anyone can view the dashboard, but you need to be logged in to add drones, dispatch missions, or change mission status
 
 ## Tech stack
 
-| Layer     | Technology                                      |
-|-----------|--------------------------------------------------|
-| Database  | PostgreSQL                                       |
-| Backend   | Node.js, Express, `pg`, JWT, bcrypt              |
-| Frontend  | React (Vite), React Router, plain CSS            |
+- **Database:** PostgreSQL
+- **Backend:** Node.js + Express, `pg` for queries (no ORM), JWT for auth, bcrypt for password hashing
+- **Frontend:** React (Vite), React Router, plain CSS — no UI framework
 
-No ORM is used on the backend — queries are written directly with the `pg` driver so the SQL stays visible and easy to reason about. No UI framework is used on the frontend — just React, React Router, and hand-written CSS, so there's nothing hidden behind a component library.
-
----
+I kept the ORM and UI framework out on purpose so the SQL and the styling stay visible instead of hidden behind abstractions I can't fully explain yet.
 
 ## Project structure
 
 ```
 fleet-command/
 ├── backend/
-│   ├── src/
-│   │   ├── config/db.js          # PostgreSQL connection pool
-│   │   ├── db/
-│   │   │   ├── schema.sql        # Table definitions
-│   │   │   ├── seed.sql          # Optional sample data
-│   │   │   └── init.js           # Runs schema.sql against your database
-│   │   ├── middleware/
-│   │   │   ├── auth.js           # Verifies JWT on protected routes
-│   │   │   ├── validate.js       # Checks required request body fields
-│   │   │   └── errorHandler.js   # Turns thrown errors into JSON responses
-│   │   ├── controllers/          # Business logic per resource
-│   │   ├── routes/                # Express routers per resource
-│   │   ├── app.js                # Express app + middleware wiring
-│   │   └── server.js             # Entry point
-│   ├── .env.example
-│   └── package.json
+│   └── src/
+│       ├── config/        # DB connection pool
+│       ├── db/            # schema.sql, seed.sql, init script
+│       ├── middleware/    # auth check, validation, error handling
+│       ├── controllers/   # route logic
+│       └── routes/
 ├── frontend/
-│   ├── src/
-│   │   ├── api/client.js         # All fetch() calls to the backend live here
-│   │   ├── context/AuthContext.jsx
-│   │   ├── components/           # DroneCard, StatusBadge, BatteryBadge, Navbar...
-│   │   ├── pages/                 # Dashboard, DroneDetail, Missions, Login, Register
-│   │   ├── App.jsx
-│   │   └── main.jsx
-│   └── package.json
-├── docker-compose.yml             # Optional: run just PostgreSQL in a container
+│   └── src/
+│       ├── api/           # all fetch calls to the backend
+│       ├── context/       # auth context
+│       ├── components/
+│       └── pages/
+├── docker-compose.yml      # spins up Postgres in a container
 └── README.md
 ```
 
----
+## Running it locally
 
-## Getting started
+**1. Get PostgreSQL running**
 
-### 1. Database
-
-**Option A — Docker (easiest):**
-```bash
+Either with Docker:
+```
 docker compose up -d
 ```
-This starts PostgreSQL on `localhost:5432` with a database called `fleet_command`, user `fleet_user`, password `fleet_password` — matching the defaults in `.env.example`.
+or install PostgreSQL yourself and create a database called `fleet_command`.
 
-**Option B — local PostgreSQL install:**
-Create a database and user yourself, then update `backend/.env` to match.
-
-### 2. Backend
-
-```bash
-cd backend
-cp .env.example .env      # edit if your DB credentials differ
-npm install
-npm run db:init           # creates all tables
-node src/db/init.js       # (same as above — db:init runs this)
-npm run dev                # starts the API on http://localhost:5000
+**2. Backend**
 ```
+cd backend
+cp .env.example .env
+npm install
+npm run db:init
+npm run dev
+```
+This starts the API on `http://localhost:5000`.
 
-Optional: load sample drones with `psql -d fleet_command -f src/db/seed.sql` (adjust connection flags to match your setup).
-
-### 3. Frontend
-
-```bash
+**3. Frontend**
+```
 cd frontend
 npm install
-npm run dev                # starts the app on http://localhost:5173
+npm run dev
 ```
+This starts the app on `http://localhost:5173`. The dev server proxies `/api` calls to the backend, so both need to be running at the same time.
 
-The Vite dev server proxies `/api/*` requests to `http://localhost:5000`, so the frontend and backend can run side by side without CORS headaches during development.
+**4. Optional — sample data**
+```
+psql -d fleet_command -f backend/src/db/seed.sql
+```
+adds a few starter drones so the dashboard isn't empty.
 
-### 4. Try it out
+## API routes
 
-1. Open `http://localhost:5173`.
-2. You'll see the dashboard (empty until you add drones, or run the seed file).
-3. Register an operator account, then log in.
-4. Add a drone, dispatch a mission, and watch its status change.
+All routes start with `/api`.
 
----
+| Method | Route | Auth? | What it does |
+|---|---|---|---|
+| POST | `/auth/register` | no | create an operator account |
+| POST | `/auth/login` | no | log in, get a token back |
+| GET | `/drones` | no | list all drones |
+| GET | `/drones/:id` | no | get one drone |
+| POST | `/drones` | yes | add a drone |
+| PATCH | `/drones/:id` | yes | update a drone |
+| DELETE | `/drones/:id` | yes | remove a drone |
+| POST | `/drones/:id/recall` | yes | send a drone back to base |
+| GET | `/missions` | no | list all missions |
+| GET | `/missions/drone/:droneId` | no | missions for one drone |
+| POST | `/missions` | yes | dispatch a mission |
+| PATCH | `/missions/:id/status` | yes | update mission status |
+| GET | `/telemetry/drone/:droneId` | no | telemetry history for a drone |
+| POST | `/telemetry/drone/:droneId` | no | log a telemetry reading |
 
-## API overview
-
-All routes are prefixed with `/api`.
-
-| Method | Endpoint                        | Auth required | Description                          |
-|--------|----------------------------------|:--------------:|---------------------------------------|
-| POST   | `/auth/register`                | No             | Create an operator account            |
-| POST   | `/auth/login`                   | No             | Log in, returns a JWT                 |
-| GET    | `/drones`                       | No             | List all drones                       |
-| GET    | `/drones/:id`                   | No             | Get one drone                         |
-| POST   | `/drones`                       | Yes            | Add a new drone                       |
-| PATCH  | `/drones/:id`                   | Yes            | Update a drone's fields               |
-| DELETE | `/drones/:id`                   | Yes            | Remove a drone                        |
-| POST   | `/drones/:id/recall`            | Yes            | Send a drone back to base, set idle   |
-| GET    | `/missions`                     | No             | List all missions (with call sign)    |
-| GET    | `/missions/drone/:droneId`      | No             | List missions for one drone           |
-| POST   | `/missions`                     | Yes            | Dispatch a new mission                |
-| PATCH  | `/missions/:id/status`          | Yes            | Update mission status                 |
-| GET    | `/telemetry/drone/:droneId`     | No             | Get recent telemetry for a drone      |
-| POST   | `/telemetry/drone/:droneId`     | No             | Record a telemetry reading            |
-
-Send the JWT from login/register as a header on protected routes:
+Protected routes need the token from login/register sent as:
 ```
 Authorization: Bearer <token>
 ```
 
----
-
 ## Database schema
 
-Four tables, defined in `backend/src/db/schema.sql`:
+Four tables:
+- `operators` — id, name, email, password_hash, created_at
+- `drones` — id, call_sign, model, status, battery_percent, pos_x, pos_y, home_base, last_seen_at
+- `missions` — id, drone_id (FK), operator_id (FK), title, destination_x/y, status, notes, created_at, completed_at
+- `telemetry_logs` — id, drone_id (FK), battery_percent, pos_x, pos_y, recorded_at
 
-- **`operators`** — id, name, email (unique), password_hash, created_at
-- **`drones`** — id, call_sign (unique), model, status, battery_percent, pos_x, pos_y, home_base, last_seen_at, created_at
-- **`missions`** — id, drone_id (FK), operator_id (FK), title, destination_x/y, status, notes, created_at, completed_at
-- **`telemetry_logs`** — id, drone_id (FK), battery_percent, pos_x, pos_y, recorded_at
+Statuses are restricted with `CHECK` constraints instead of a separate enum, mainly so I could see the valid values directly in the schema file without looking anywhere else.
 
-Status fields use `CHECK` constraints instead of a separate enum type, so the valid values are visible right in the table definition. Foreign keys cascade on delete for `missions` and `telemetry_logs`, so removing a drone cleans up its history automatically.
+## Things I'd add if I kept working on this
 
----
+- A live map view instead of just printing (x, y) coordinates as numbers
+- WebSockets so telemetry updates show up without refreshing the page
+- Roles (admin vs operator) so only admins can delete drones
+- Tests for the backend controllers with Jest + Supertest
+- Pagination on `/missions` and `/telemetry` once there's more data
 
-## Ideas for extending this
+## License
 
-- Add a live map view (SVG or Canvas) plotting drone (x, y) positions instead of just printing coordinates.
-- Add a WebSocket connection so telemetry updates push to the dashboard in real time instead of requiring a page refresh.
-- Add role-based auth (e.g. "admin" vs "operator") so only admins can delete drones.
-- Add pagination to `/missions` and `/telemetry` once there's enough data to matter.
-- Write integration tests for the controllers using Jest + Supertest, and a test database.
-
----
-
+MIT
