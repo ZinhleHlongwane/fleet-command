@@ -8,7 +8,7 @@ I already had a drone fleet API built with Spring Boot for one of my other proje
 
 - Operators can register and log in (JWT auth, passwords hashed with bcrypt)
 - Drones have a call sign, model, status, battery %, and a position on a grid
-- You can dispatch a drone on a mission to a destination — this automatically updates the drone's status to `in_mission`
+- You can dispatch a drone on a mission to a destination, this automatically updates the drone's status to `in_mission`
 - Marking a mission as completed or aborted frees the drone back up to `idle`
 - Each drone keeps a telemetry log (battery + position readings over time)
 - Anyone can view the dashboard, but you need to be logged in to add drones, dispatch missions, or change mission status
@@ -17,7 +17,7 @@ I already had a drone fleet API built with Spring Boot for one of my other proje
 
 - **Database:** PostgreSQL
 - **Backend:** Node.js + Express, `pg` for queries (no ORM), JWT for auth, bcrypt for password hashing
-- **Frontend:** React (Vite), React Router, plain CSS — no UI framework
+- **Frontend:** React (Vite), React Router, plain CSS, no UI framework
 
 I kept the ORM and UI framework out on purpose so the SQL and the styling stay visible instead of hidden behind abstractions I can't fully explain yet.
 
