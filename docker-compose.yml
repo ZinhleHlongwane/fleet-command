@@ -1,0 +1,22 @@
+# Optional: spins up just the PostgreSQL database in a container so you
+# don't have to install Postgres locally. Run with: docker compose up -d
+# Then point backend/.env at PGHOST=localhost, PGPORT=5432 (already the default).
+
+version: "3.8"
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: fleet-command-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: fleet_user
+      POSTGRES_PASSWORD: fleet_password
+      POSTGRES_DB: fleet_command
+    ports:
+      - "5432:5432"
+    volumes:
+      - fleet_command_data:/var/lib/postgresql/data
+
+volumes:
+  fleet_command_data:
