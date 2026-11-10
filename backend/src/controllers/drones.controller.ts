@@ -1,28 +1,65 @@
+
 // CRUD operations for drones, plus a couple of fleet-specific actions
 // like "recall to base" and "recharge".
 
-const db = require("../config/db");
-const { ApiError } = require("../middleware/errorHandler");
-const asyncHandler = require("../utils/asyncHandler");
+import db = require("../config/db");
+import { ApiError } from "../middleware/errorHandler";
+import asyncHandler = require("../utils/asyncHandler");
+
+interface DroneRow {
+  id: number;
+  call_sign: string;
+  model: string;
+  status: string;
+  battery_percent: number;
+  pos_x: number;
+  pos_y: number;
+  home_base: string;
+  last_seen_at: Date | string;
+}
+
+interface CreateDroneBody {
+  call_sign: string;
+  model: string;
+  home_base?: string;
+}
+
+interface UpdateDroneBody {
+  call_sign?: string;
+  model?: string;
+  status?: string;
+  battery_percent?: number;
+  pos_x?: number;
+  pos_y?: number;
+  home_base?: string;
+}
 
 const getAllDrones = asyncHandler(async (req, res) => {
-  const result = await db.query("SELECT * FROM drones ORDER BY call_sign ASC");
-  res.json(result.rows);
+  const result = await db.query(
+    "SELECT * FROM drones ORDER BY call_sign ASC"
+  );
+
+  res.json(result.rows as DroneRow[]);
 });
 
 const getDroneById = asyncHandler(async (req, res) => {
   const { id } = req.params;
-  const result = await db.query("SELECT * FROM drones WHERE id = $1", [id]);
+
+  const result = await db.query(
+    "SELECT * FROM drones WHERE id = $1",
+    [id]
+  );
 
   if (result.rows.length === 0) {
     throw new ApiError(404, "Drone not found");
   }
 
-  res.json(result.rows[0]);
+  res.json(result.rows[0] as DroneRow);
 });
 
 const createDrone = asyncHandler(async (req, res) => {
-  const { call_sign, model, home_base } = req.body;
+  const { call_sign, model, home_base } =
+    req.body as CreateDroneBody;
 
   const result = await db.query(
     `INSERT INTO drones (call_sign, model, home_base)
@@ -31,12 +68,21 @@ const createDrone = asyncHandler(async (req, res) => {
     [call_sign, model, home_base]
   );
 
-  res.status(201).json(result.rows[0]);
+  res.status(201).json(result.rows[0] as DroneRow);
 });
 
 const updateDrone = asyncHandler(async (req, res) => {
   const { id } = req.params;
-  const { call_sign, model, status, battery_percent, pos_x, pos_y, home_base } = req.body;
+
+  const {
+    call_sign,
+    model,
+    status,
+    battery_percent,
+    pos_x,
+    pos_y,
+    home_base,
+  } = req.body as UpdateDroneBody;
 
   const result = await db.query(
     `UPDATE drones SET
@@ -57,12 +103,16 @@ const updateDrone = asyncHandler(async (req, res) => {
     throw new ApiError(404, "Drone not found");
   }
 
-  res.json(result.rows[0]);
+  res.json(result.rows[0] as DroneRow);
 });
 
 const deleteDrone = asyncHandler(async (req, res) => {
   const { id } = req.params;
-  const result = await db.query("DELETE FROM drones WHERE id = $1 RETURNING id", [id]);
+
+  const result = await db.query(
+    "DELETE FROM drones WHERE id = $1 RETURNING id",
+    [id]
+  );
 
   if (result.rows.length === 0) {
     throw new ApiError(404, "Drone not found");
@@ -88,10 +138,10 @@ const recallDrone = asyncHandler(async (req, res) => {
     throw new ApiError(404, "Drone not found");
   }
 
-  res.json(result.rows[0]);
+  res.json(result.rows[0] as DroneRow);
 });
 
-module.exports = {
+export {
   getAllDrones,
   getDroneById,
   createDrone,
