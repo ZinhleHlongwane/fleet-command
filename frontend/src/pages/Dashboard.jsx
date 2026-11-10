@@ -1,9 +1,9 @@
-
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { api } from "../api/client";
 import DroneCard from "../components/DroneCard";
 import StatusBadge from "../components/StatusBadge";
+import FleetMap from "../components/FleetMap";
 import { useAuth } from "../context/AuthContext";
 
 export default function Dashboard() {
@@ -164,73 +164,43 @@ export default function Dashboard() {
       </section>
 
       <div className="dashboard-lower-grid">
-        <section className="dashboard-panel">
-          <div className="section-heading">
-            <div>
-              <h2>Fleet Coordinates</h2>
-              <p>Current drone positions.</p>
-            </div>
-          </div>
+  <FleetMap drones={drones} />
 
-          <div className="fleet-coordinate-list">
-            {drones.length === 0 ? (
-              <p className="page-message">No drone positions available.</p>
-            ) : (
-              drones.map((drone) => (
-                <Link
-                  to={`/drones/${drone.id}`}
-                  className="coordinate-item"
-                  key={drone.id}
-                >
-                  <span className="coordinate-indicator" />
-                  <span className="coordinate-drone">
-                    {drone.call_sign}
-                  </span>
-                  <span className="coordinate-value">
-                    ({Number(drone.pos_x).toFixed(2)},{" "}
-                    {Number(drone.pos_y).toFixed(2)})
-                  </span>
-                </Link>
-              ))
-            )}
-          </div>
-        </section>
-
-        <section className="dashboard-panel">
-          <div className="section-heading">
-            <div>
-              <h2>Mission Tracking</h2>
-              <p>Latest fleet mission activity.</p>
-            </div>
-            <Link to="/missions" className="section-link">
-              View all
-            </Link>
-          </div>
-
-          {missions.length === 0 ? (
-            <p className="page-message">
-              No missions have been dispatched yet.
-            </p>
-          ) : (
-            <div className="mission-list">
-              {missions.slice(0, 4).map((mission) => (
-                <div className="mission-item" key={mission.id}>
-                  <div className="mission-info">
-                    <strong>{mission.title}</strong>
-                    <span>{mission.call_sign}</span>
-                    <span>
-                      Destination: ({mission.destination_x},{" "}
-                      {mission.destination_y})
-                    </span>
-                  </div>
-
-                  <StatusBadge status={mission.status} />
-                </div>
-              ))}
-            </div>
-          )}
-        </section>
+  <section className="dashboard-panel">
+    <div className="section-heading">
+      <div>
+        <h2>Mission Tracking</h2>
+        <p>Latest fleet mission activity.</p>
       </div>
+      <Link to="/missions" className="section-link">
+        View all
+      </Link>
+    </div>
+
+    {missions.length === 0 ? (
+      <p className="page-message">
+        No missions have been dispatched yet.
+      </p>
+    ) : (
+      <div className="mission-list">
+        {missions.slice(0, 4).map((mission) => (
+          <div className="mission-item" key={mission.id}>
+            <div className="mission-info">
+              <strong>{mission.title}</strong>
+              <span>{mission.call_sign}</span>
+              <span>
+                Destination: ({mission.destination_x},{" "}
+                {mission.destination_y})
+              </span>
+            </div>
+
+            <StatusBadge status={mission.status} />
+          </div>
+        ))}
+      </div>
+    )}
+  </section>
+</div>
     </div>
   );
 }
