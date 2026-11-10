@@ -1,10 +1,26 @@
-process.env.JWT_SECRET = process.env.JWT_SECRET || "test-secret";
-const { test, mock } = require("node:test");
-const assert = require("node:assert/strict");
-const request = require("supertest");
 
-const app = require("../src/app");
-const db = require("../src/config/db");
+process.env.JWT_SECRET = process.env.JWT_SECRET || "test-secret";
+
+import { test, mock } from "node:test";
+import assert from "node:assert/strict";
+import request from "supertest";
+import jwt from "jsonwebtoken";
+
+import app = require("../src/app");
+import db = require("../src/config/db");
+
+type MockQueryResult = Awaited<ReturnType<typeof db.query>>;
+
+function mockRows(rows: unknown[]): MockQueryResult {
+  return { rows } as MockQueryResult;
+}
+
+function createToken(): string {
+  return jwt.sign(
+    { id: 1 },
+    process.env.JWT_SECRET as string
+  );
+}
 
 test("returns all drones", async (t) => {
   const drones = [
@@ -20,9 +36,11 @@ test("returns all drones", async (t) => {
     },
   ];
 
-  const queryMock = mock.method(db, "query", async () => ({
-    rows: drones,
-  }));
+  const queryMock = mock.method(
+    db,
+    "query",
+    async () => mockRows(drones)
+  );
 
   t.after(() => queryMock.mock.restore());
 
@@ -40,9 +58,11 @@ test("returns a drone by ID", async (t) => {
     model: "DJI Mavic 3",
   };
 
-  const queryMock = mock.method(db, "query", async () => ({
-    rows: [drone],
-  }));
+  const queryMock = mock.method(
+    db,
+    "query",
+    async () => mockRows([drone])
+  );
 
   t.after(() => queryMock.mock.restore());
 
@@ -54,9 +74,11 @@ test("returns a drone by ID", async (t) => {
 });
 
 test("returns 404 when the drone does not exist", async (t) => {
-  const queryMock = mock.method(db, "query", async () => ({
-    rows: [],
-  }));
+  const queryMock = mock.method(
+    db,
+    "query",
+    async () => mockRows([])
+  );
 
   t.after(() => queryMock.mock.restore());
 
@@ -77,20 +99,17 @@ test("creates a drone successfully", async (t) => {
     home_base: "Main Depot",
   };
 
-  const queryMock = mock.method(db, "query", async () => ({
-    rows: [drone],
-  }));
+  const queryMock = mock.method(
+    db,
+    "query",
+    async () => mockRows([drone])
+  );
 
   t.after(() => queryMock.mock.restore());
 
-  const token = require("jsonwebtoken").sign(
-    { id: 1 },
-    process.env.JWT_SECRET
-  );
-
   const response = await request(app)
     .post("/api/drones")
-    .set("Authorization", `Bearer ${token}`)
+    .set("Authorization", `Bearer ${createToken()}`)
     .send({
       call_sign: "Hawk-03",
       model: "DJI Matrice 300",
@@ -103,14 +122,9 @@ test("creates a drone successfully", async (t) => {
 });
 
 test("rejects drone creation when required fields are missing", async () => {
-  const token = require("jsonwebtoken").sign(
-    { id: 1 },
-    process.env.JWT_SECRET
-  );
-
   const response = await request(app)
     .post("/api/drones")
-    .set("Authorization", `Bearer ${token}`)
+    .set("Authorization", `Bearer ${createToken()}`)
     .send({
       call_sign: "Hawk-03",
     });
@@ -121,6 +135,32 @@ test("rejects drone creation when required fields are missing", async () => {
   });
 });
 
+test("rejects drone creation when call_sign is missing", async () => {
+  const response = await request(app)
+    .post("/api/drones")
+    .set("Authorization", `Bearer ${createToken()}`)
+    .send({
+      model: "DJI Matrice 300",
+    });
+
+  assert.equal(response.status, 400);
+  assert.deepEqual(response.body, {
+    error: "Missing required field(s): call_sign",
+  });
+});
+
+test("rejects drone creation when both required fields are missing", async () => {
+  const response = await request(app)
+    .post("/api/drones")
+    .set("Authorization", `Bearer ${createToken()}`)
+    .send({});
+
+  assert.equal(response.status, 400);
+  assert.deepEqual(response.body, {
+    error: "Missing required field(s): call_sign, model",
+  });
+});
+
 test("rejects drone creation without an authentication token", async () => {
   const response = await request(app)
     .post("/api/drones")
@@ -128,6 +168,39 @@ test("rejects drone creation without an authentication token", async () => {
       call_sign: "Hawk-04",
       model: "DJI Matrice 300",
     });
+
+  assert.equal(response.status, 401);
+  assert.deepEqual(response.body, {
+    error: "You must be logged in to do that",
+  });
+});
+
+test("rejects drone updates without an authentication token", async () => {
+  const response = await request(app)
+    .patch("/api/drones/1")
+    .send({
+      status: "idle",
+    });
+
+  assert.equal(response.status, 401);
+  assert.deepEqual(response.body, {
+    error: "You must be logged in to do that",
+  });
+});
+
+test("rejects drone deletion without an authentication token", async () => {
+  const response = await request(app)
+    .delete("/api/drones/1");
+
+  assert.equal(response.status, 401);
+  assert.deepEqual(response.body, {
+    error: "You must be logged in to do that",
+  });
+});
+
+test("rejects drone recall without an authentication token", async () => {
+  const response = await request(app)
+    .post("/api/drones/1/recall");
 
   assert.equal(response.status, 401);
   assert.deepEqual(response.body, {
@@ -147,20 +220,17 @@ test("updates a drone successfully", async (t) => {
     home_base: "New Depot",
   };
 
-  const queryMock = mock.method(db, "query", async () => ({
-    rows: [updatedDrone],
-  }));
+  const queryMock = mock.method(
+    db,
+    "query",
+    async () => mockRows([updatedDrone])
+  );
 
   t.after(() => queryMock.mock.restore());
 
-  const token = require("jsonwebtoken").sign(
-    { id: 1 },
-    process.env.JWT_SECRET
-  );
-
   const response = await request(app)
     .patch("/api/drones/1")
-    .set("Authorization", `Bearer ${token}`)
+    .set("Authorization", `Bearer ${createToken()}`)
     .send({
       battery_percent: 85,
       home_base: "New Depot",
@@ -173,20 +243,17 @@ test("updates a drone successfully", async (t) => {
 });
 
 test("returns 404 when updating a drone that does not exist", async (t) => {
-  const queryMock = mock.method(db, "query", async () => ({
-    rows: [],
-  }));
+  const queryMock = mock.method(
+    db,
+    "query",
+    async () => mockRows([])
+  );
 
   t.after(() => queryMock.mock.restore());
 
-  const token = require("jsonwebtoken").sign(
-    { id: 1 },
-    process.env.JWT_SECRET
-  );
-
   const response = await request(app)
     .patch("/api/drones/999")
-    .set("Authorization", `Bearer ${token}`)
+    .set("Authorization", `Bearer ${createToken()}`)
     .send({
       status: "idle",
     });
@@ -199,20 +266,17 @@ test("returns 404 when updating a drone that does not exist", async (t) => {
 });
 
 test("deletes a drone successfully", async (t) => {
-  const queryMock = mock.method(db, "query", async () => ({
-    rows: [{ id: 1 }],
-  }));
+  const queryMock = mock.method(
+    db,
+    "query",
+    async () => mockRows([{ id: 1 }])
+  );
 
   t.after(() => queryMock.mock.restore());
 
-  const token = require("jsonwebtoken").sign(
-    { id: 1 },
-    process.env.JWT_SECRET
-  );
-
   const response = await request(app)
     .delete("/api/drones/1")
-    .set("Authorization", `Bearer ${token}`);
+    .set("Authorization", `Bearer ${createToken()}`);
 
   assert.equal(response.status, 204);
   assert.equal(response.text, "");
@@ -220,20 +284,17 @@ test("deletes a drone successfully", async (t) => {
 });
 
 test("returns 404 when deleting a drone that does not exist", async (t) => {
-  const queryMock = mock.method(db, "query", async () => ({
-    rows: [],
-  }));
+  const queryMock = mock.method(
+    db,
+    "query",
+    async () => mockRows([])
+  );
 
   t.after(() => queryMock.mock.restore());
 
-  const token = require("jsonwebtoken").sign(
-    { id: 1 },
-    process.env.JWT_SECRET
-  );
-
   const response = await request(app)
     .delete("/api/drones/999")
-    .set("Authorization", `Bearer ${token}`);
+    .set("Authorization", `Bearer ${createToken()}`);
 
   assert.equal(response.status, 404);
   assert.deepEqual(response.body, {
@@ -252,20 +313,17 @@ test("recalls a drone to base successfully", async (t) => {
     pos_y: 0,
   };
 
-  const queryMock = mock.method(db, "query", async () => ({
-    rows: [recalledDrone],
-  }));
+  const queryMock = mock.method(
+    db,
+    "query",
+    async () => mockRows([recalledDrone])
+  );
 
   t.after(() => queryMock.mock.restore());
 
-  const token = require("jsonwebtoken").sign(
-    { id: 1 },
-    process.env.JWT_SECRET
-  );
-
   const response = await request(app)
     .post("/api/drones/1/recall")
-    .set("Authorization", `Bearer ${token}`);
+    .set("Authorization", `Bearer ${createToken()}`);
 
   assert.equal(response.status, 200);
   assert.equal(response.body.status, "idle");
@@ -275,20 +333,17 @@ test("recalls a drone to base successfully", async (t) => {
 });
 
 test("returns 404 when recalling a drone that does not exist", async (t) => {
-  const queryMock = mock.method(db, "query", async () => ({
-    rows: [],
-  }));
+  const queryMock = mock.method(
+    db,
+    "query",
+    async () => mockRows([])
+  );
 
   t.after(() => queryMock.mock.restore());
 
-  const token = require("jsonwebtoken").sign(
-    { id: 1 },
-    process.env.JWT_SECRET
-  );
-
   const response = await request(app)
     .post("/api/drones/999/recall")
-    .set("Authorization", `Bearer ${token}`);
+    .set("Authorization", `Bearer ${createToken()}`);
 
   assert.equal(response.status, 404);
   assert.deepEqual(response.body, {

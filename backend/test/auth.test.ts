@@ -1,13 +1,20 @@
-const { test, mock } = require("node:test");
-const assert = require("node:assert/strict");
-const request = require("supertest");
-const bcrypt = require("bcryptjs");
-const jwt = require("jsonwebtoken");
 
-const app = require("../src/app");
-const db = require("../src/config/db");
+import { test, mock } from "node:test";
+import assert from "node:assert/strict";
+import request from "supertest";
+import bcrypt from "bcryptjs";
+import jwt from "jsonwebtoken";
+
+import app = require("../src/app");
+import db = require("../src/config/db");
 
 process.env.JWT_SECRET = "test-secret-key-for-auth-tests";
+
+type MockQueryResult = Awaited<ReturnType<typeof db.query>>;
+
+function mockRows(rows: unknown[]): MockQueryResult {
+  return { rows } as MockQueryResult;
+}
 
 test("registers a new operator successfully", async (t) => {
   const newOperator = {
@@ -17,20 +24,27 @@ test("registers a new operator successfully", async (t) => {
     created_at: new Date().toISOString(),
   };
 
-  let savedPasswordHash;
+  let savedPasswordHash = "";
 
-  const queryMock = mock.method(db, "query", async (sql, params) => {
-    if (sql.includes("SELECT id FROM operators")) {
-      return { rows: [] };
+  const queryMock = mock.method(
+    db,
+    "query",
+    async (...args: Parameters<typeof db.query>) => {
+      const sql = String(args[0]);
+      const params = args[1] as unknown[] | undefined;
+
+      if (sql.includes("SELECT id FROM operators")) {
+        return mockRows([]);
+      }
+
+      if (sql.includes("INSERT INTO operators")) {
+        savedPasswordHash = String(params?.[2]);
+        return mockRows([newOperator]);
+      }
+
+      throw new Error("Unexpected database query");
     }
-
-    if (sql.includes("INSERT INTO operators")) {
-      savedPasswordHash = params[2];
-      return { rows: [newOperator] };
-    }
-
-    throw new Error("Unexpected database query");
-  });
+  );
 
   t.after(() => queryMock.mock.restore());
 
@@ -53,8 +67,8 @@ test("registers a new operator successfully", async (t) => {
 
   const decodedToken = jwt.verify(
     response.body.token,
-    process.env.JWT_SECRET
-  );
+    process.env.JWT_SECRET as string
+  ) as jwt.JwtPayload;
 
   assert.equal(decodedToken.id, 1);
   assert.equal(decodedToken.email, "test@example.com");
@@ -63,9 +77,11 @@ test("registers a new operator successfully", async (t) => {
 });
 
 test("rejects registration when the email already exists", async (t) => {
-  const queryMock = mock.method(db, "query", async () => {
-    return { rows: [{ id: 1 }] };
-  });
+  const queryMock = mock.method(
+    db,
+    "query",
+    async () => mockRows([{ id: 1 }])
+  );
 
   t.after(() => queryMock.mock.restore());
 
@@ -98,9 +114,11 @@ test("logs in an operator with the correct password", async (t) => {
     password_hash: passwordHash,
   };
 
-  const queryMock = mock.method(db, "query", async () => {
-    return { rows: [existingOperator] };
-  });
+  const queryMock = mock.method(
+    db,
+    "query",
+    async () => mockRows([existingOperator])
+  );
 
   t.after(() => queryMock.mock.restore());
 
@@ -119,8 +137,8 @@ test("logs in an operator with the correct password", async (t) => {
   // Verify that the returned JWT is valid.
   const decodedToken = jwt.verify(
     response.body.token,
-    process.env.JWT_SECRET
-  );
+    process.env.JWT_SECRET as string
+  ) as jwt.JwtPayload;
 
   assert.equal(decodedToken.id, 1);
   assert.equal(decodedToken.email, "test@example.com");
@@ -132,14 +150,19 @@ test("logs in an operator with the correct password", async (t) => {
 test("rejects login with an incorrect password", async (t) => {
   const passwordHash = await bcrypt.hash("password123", 10);
 
-  const queryMock = mock.method(db, "query", async () => ({
-    rows: [{
-      id: 1,
-      name: "Test Operator",
-      email: "test@example.com",
-      password_hash: passwordHash,
-    }],
-  }));
+  const queryMock = mock.method(
+    db,
+    "query",
+    async () =>
+      mockRows([
+        {
+          id: 1,
+          name: "Test Operator",
+          email: "test@example.com",
+          password_hash: passwordHash,
+        },
+      ])
+  );
 
   t.after(() => queryMock.mock.restore());
 
@@ -155,9 +178,11 @@ test("rejects login with an incorrect password", async (t) => {
 });
 
 test("rejects login when the email does not exist", async (t) => {
-  const queryMock = mock.method(db, "query", async () => ({
-    rows: [],
-  }));
+  const queryMock = mock.method(
+    db,
+    "query",
+    async () => mockRows([])
+  );
 
   t.after(() => queryMock.mock.restore());
 
@@ -206,7 +231,7 @@ test("rejects drone creation with an invalid token", async () => {
 test("allows drone creation with a valid authentication token", async (t) => {
   const token = jwt.sign(
     { id: 1, email: "test@example.com", name: "Test Operator" },
-    process.env.JWT_SECRET
+    process.env.JWT_SECRET as string
   );
 
   const createdDrone = {
@@ -216,9 +241,11 @@ test("allows drone creation with a valid authentication token", async (t) => {
     status: "idle",
   };
 
-  const queryMock = mock.method(db, "query", async () => ({
-    rows: [createdDrone],
-  }));
+  const queryMock = mock.method(
+    db,
+    "query",
+    async () => mockRows([createdDrone])
+  );
 
   t.after(() => queryMock.mock.restore());
 
