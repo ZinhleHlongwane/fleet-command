@@ -944,3 +944,99 @@ button.danger {
     align-items: flex-start;
   }
 }
+
+
+/* Tactical Fleet Map */
+
+.fleet-map-panel {
+  min-width: 0;
+  overflow: hidden;
+}
+
+.map-live-indicator {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #4ade80;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1px;
+}
+
+.map-live-indicator span {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #4ade80;
+  box-shadow: 0 0 10px #4ade80;
+}
+
+.fleet-map {
+  width: 100%;
+  overflow: hidden;
+  margin-top: 20px;
+  border: 1px solid #24385f;
+  border-radius: 10px;
+  background: #0b1730;
+}
+
+.fleet-map svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  min-height: 260px;
+}
+
+.fleet-map a {
+  cursor: pointer;
+}
+
+.fleet-map a:hover circle:nth-child(1) {
+  opacity: 0.35;
+}
+
+.fleet-map-legend {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 22px;
+  margin-top: 18px;
+  color: var(--text-muted);
+  font-size: 12px;
+}
+
+.fleet-map-legend span {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.legend-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.legend-dot.active {
+  background: #22c55e;
+}
+
+.legend-dot.idle {
+  background: #60a5fa;
+}
+
+.legend-dot.other {
+  background: #94a3b8;
+}
+
+@media (max-width: 600px) {
+  .fleet-map svg {
+    min-height: 200px;
+  }
+
+  .fleet-map-legend {
+    gap: 12px;
+  }
+}
+
