@@ -1,4 +1,4 @@
-import { Link, useNavigate } from "react-router-dom";
+import { Link, NavLink, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 
 export default function Navbar() {
@@ -11,22 +11,67 @@ export default function Navbar() {
   }
 
   return (
-    <nav className="navbar">
-      <Link to="/" className="brand">
-        🛰️ Fleet Command
-      </Link>
-      <div className="nav-links">
-        <Link to="/">Dashboard</Link>
-        <Link to="/missions">Missions</Link>
-        {operator ? (
-          <>
-            <span className="operator-name">{operator.name}</span>
-            <button onClick={handleLogout}>Log out</button>
-          </>
-        ) : (
-          <Link to="/login">Log in</Link>
-        )}
-      </div>
-    </nav>
+    <>
+      <aside className="sidebar">
+        <Link to="/" className="sidebar-brand">
+          <span className="brand-icon">✥</span>
+          <span>
+            Fleet
+            <strong>Command</strong>
+          </span>
+        </Link>
+
+        <nav className="sidebar-nav">
+          <NavLink to="/" end className="sidebar-link">
+            <span>▦</span>
+            Dashboard
+          </NavLink>
+
+          <NavLink to="/missions" className="sidebar-link">
+            <span>➤</span>
+            Missions
+          </NavLink>
+        </nav>
+
+        <div className="sidebar-bottom">
+          <div className="sidebar-extra">
+            <span>⚙</span>
+            Settings
+          </div>
+
+          <div className="sidebar-extra">
+            <span>?</span>
+            Help
+          </div>
+
+          {operator && (
+            <div className="sidebar-account">
+              <div className="account-avatar">
+                {operator.name?.charAt(0).toUpperCase() || "U"}
+              </div>
+              <span>{operator.name}</span>
+              <span className="account-chevron">⌄</span>
+            </div>
+          )}
+
+          <button className="sidebar-logout" onClick={handleLogout}>
+            <span>⇥</span>
+            Log out
+          </button>
+        </div>
+      </aside>
+
+      <header className="topbar">
+        <div className="topbar-spacer" />
+        <div className="topbar-account">
+          <span className="notification-icon">♧</span>
+          <div className="account-avatar">
+            {operator?.name?.charAt(0).toUpperCase() || "U"}
+          </div>
+          <span>{operator?.name || "Operator"}</span>
+          <span>⌄</span>
+        </div>
+      </header>
+    </>
   );
 }
