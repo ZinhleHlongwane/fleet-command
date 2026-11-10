@@ -662,3 +662,285 @@ button.danger {
     font-size: 0.8rem;
   }
 }
+
+
+/* ========================================
+   DASHBOARD HEADING
+======================================== */
+
+.dashboard-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.dashboard-heading h1 {
+  margin: 0.3rem 0;
+  font-size: 2rem;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+}
+
+.eyebrow {
+  color: #60a5fa;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 2px;
+  margin: 0;
+}
+
+.dashboard-subtitle {
+  color: var(--text-muted);
+  margin: 0.5rem 0 0;
+  font-size: 0.95rem;
+}
+
+.add-drone-button {
+  padding: 0.75rem 1.2rem;
+  border-radius: 8px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+/* ========================================
+   DASHBOARD SUMMARY CARDS
+======================================== */
+
+.dashboard-stats {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.stat-card {
+  min-width: 0;
+  padding: 1.3rem;
+  background: linear-gradient(145deg, #142442, #101c35);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+}
+
+.stat-label {
+  display: block;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  margin-bottom: 1rem;
+}
+
+.stat-value {
+  display: block;
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--text-main);
+}
+
+.stat-description {
+  display: block;
+  margin-top: 0.5rem;
+  color: #8299c2;
+  font-size: 0.78rem;
+}
+
+/* ========================================
+   DASHBOARD SECTIONS
+======================================== */
+
+.dashboard-section {
+  margin-bottom: 2rem;
+}
+
+.section-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.section-heading h2 {
+  margin: 0;
+  font-size: 1.15rem;
+  font-weight: 650;
+}
+
+.section-heading p {
+  margin: 0.35rem 0 0;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+}
+
+.section-count {
+  color: var(--text-muted);
+  font-size: 0.8rem;
+}
+
+/* ========================================
+   LOWER DASHBOARD PANELS
+======================================== */
+
+.dashboard-lower-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1.2rem;
+}
+
+.dashboard-panel {
+  min-width: 0;
+  padding: 1.3rem;
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+}
+
+.section-link {
+  color: #60a5fa;
+  font-size: 0.85rem;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.section-link:hover {
+  color: white;
+}
+
+/* ========================================
+   FLEET COORDINATES
+======================================== */
+
+.fleet-coordinate-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.coordinate-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.85rem;
+  background: #142442;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  color: var(--text-main);
+  text-decoration: none;
+  min-width: 0;
+}
+
+.coordinate-item:hover {
+  border-color: var(--blue-light);
+}
+
+.coordinate-indicator {
+  width: 9px;
+  height: 9px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: #60a5fa;
+  box-shadow: 0 0 10px #3b82f680;
+}
+
+.coordinate-drone {
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.coordinate-value {
+  margin-left: auto;
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  white-space: nowrap;
+}
+
+/* ========================================
+   MISSION TRACKING
+======================================== */
+
+.mission-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.mission-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.85rem;
+  background: #142442;
+  border: 1px solid transparent;
+  border-radius: 8px;
+}
+
+.mission-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  min-width: 0;
+}
+
+.mission-info strong {
+  font-size: 0.9rem;
+}
+
+.mission-info span {
+  color: var(--text-muted);
+  font-size: 0.78rem;
+}
+
+/* ========================================
+   RESPONSIVE DASHBOARD
+======================================== */
+
+@media (max-width: 1000px) {
+  .dashboard-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 768px) {
+  .dashboard-lower-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .dashboard-heading {
+    align-items: flex-start;
+  }
+}
+
+@media (max-width: 480px) {
+  .dashboard-heading {
+    flex-direction: column;
+  }
+
+  .dashboard-heading h1 {
+    font-size: 1.6rem;
+  }
+
+  .add-drone-button {
+    width: 100%;
+  }
+
+  .dashboard-stats {
+    gap: 0.65rem;
+  }
+
+  .stat-card {
+    padding: 1rem;
+  }
+
+  .stat-value {
+    font-size: 1.6rem;
+  }
+
+  .dashboard-panel {
+    padding: 1rem;
+  }
+
+  .mission-item {
+    align-items: flex-start;
+  }
+}
