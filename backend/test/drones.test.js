@@ -1,3 +1,4 @@
+process.env.JWT_SECRET = process.env.JWT_SECRET || "test-secret";
 const { test, mock } = require("node:test");
 const assert = require("node:assert/strict");
 const request = require("supertest");
