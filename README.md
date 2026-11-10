@@ -1,4 +1,4 @@
-<div align="center">
+ <div align="center">
 
 # 🛰️ Fleet Command
 
@@ -8,6 +8,7 @@
 ![Express](https://img.shields.io/badge/Express-000000?logo=express&logoColor=white)
 ![React](https://img.shields.io/badge/React-61DAFB?logo=react&logoColor=black)
 ![Node.js](https://img.shields.io/badge/Node.js-339933?logo=nodedotjs&logoColor=white)
+![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?logo=typescript&logoColor=white)
 ![JWT](https://img.shields.io/badge/Auth-JWT-000000?logo=jsonwebtokens&logoColor=white)
 
 </div>
@@ -18,7 +19,9 @@ Register drones, dispatch them on missions, and track their battery and position
 
 I already had a drone fleet backend built with Spring Boot in my Cloud Fleet project.
 
-I wanted to rebuild the same domain using a JavaScript stack so I could compare how the same type of system feels in **Spring Boot versus Express**.
+I wanted to rebuild the same domain using the Node.js and Express stack so I could compare how the same type of system feels in **Spring Boot versus Express**.
+
+I later migrated the backend from JavaScript to TypeScript to add static typing and improve maintainability.
 
 This version also gave me more practice building a complete application with both a backend and a frontend.
 
@@ -61,12 +64,14 @@ flowchart LR
 | Area | Technology |
 |---|---|
 | **Database** | PostgreSQL |
-| **Backend** | Node.js, Express |
+| **Backend** | Node.js, Express, TypeScript |
 | **Authentication** | JWT, bcrypt |
 | **Frontend** | React, Vite, React Router |
 | **Styling** | Plain CSS |
 | **Database access** | `pg` with raw SQL |
 | **API style** | REST |
+| **Testing** | Node.js built-in test runner, Supertest |
+| **Development** | TypeScript, tsx, nodemon |
 
 ## Run it
 
@@ -130,17 +135,49 @@ The Vite development server proxies `/api` requests to the backend.
 psql -d fleet_command -f backend/src/db/seed.sql
 ```
 
+## Backend testing
+
+The backend uses Node.js's built-in test runner with Supertest for API testing.
+
+Run the tests from the backend directory:
+
+```bash
+cd backend
+npm test
+```
+
+To check TypeScript types without generating build files:
+
+```bash
+npx tsc --noEmit
+```
+
+To compile the backend:
+
+```bash
+npm run build
+```
+
+The test suite covers:
+
+- Operator registration and login
+- Authentication and protected routes
+- Drone operations, including creation, updates, deletion and recall
+- Request validation and missing required fields
+- Error handling for unsuccessful requests
+
 ## Project structure
 
 ```text
 fleet-command/
 ├── backend/
-│   └── src/
-│       ├── config/        database connection
-│       ├── db/            schema, seed data and init script
-│       ├── middleware/    authentication, validation and error handling
-│       ├── controllers/   request logic
-│       └── routes/        REST endpoints
+│   ├── src/
+│   │   ├── config/        database connection
+│   │   ├── db/            schema, seed data and init script
+│   │   ├── middleware/    authentication, validation and error handling
+│   │   ├── controllers/   request logic
+│   │   └── routes/        REST endpoints
+│   └── test/              backend tests
 │
 └── frontend/
     └── src/
@@ -285,6 +322,12 @@ Express gives me much more direct control over how the application is structured
 
 That also means I have to make more decisions myself about middleware, validation, routing and error handling.
 
+### TypeScript
+
+Migrating the backend from JavaScript to TypeScript introduced static typing into the application.
+
+Defining interfaces for database records and request bodies made data structures more explicit and helped catch type-related issues during development.
+
 ### Raw SQL
 
 Using `pg` without an ORM forced me to work directly with SQL queries, joins and constraints instead of relying on an abstraction layer.
@@ -305,9 +348,10 @@ This is one of the first security improvements I plan to make.
 
 ## What's next
 
+- [x] Migrate backend from JavaScript to TypeScript
+- [x] Add backend tests with Node.js test runner and Supertest
+- [x] Add input-validation tests
 - [ ] Protect the telemetry write endpoint
-- [ ] Add backend tests with Jest and Supertest
-- [ ] Add input-validation tests
 - [ ] Add Helmet
 - [ ] Add rate limiting
 - [ ] Add GitHub Actions for backend tests
