@@ -1,24 +1,32 @@
-// The main landing page: a grid of every drone in the fleet, plus a
-// quick summary bar of how many are in each status.
 
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import { api } from "../api/client";
 import DroneCard from "../components/DroneCard";
+import StatusBadge from "../components/StatusBadge";
 import { useAuth } from "../context/AuthContext";
 
 export default function Dashboard() {
   const { operator } = useAuth();
+
   const [drones, setDrones] = useState([]);
+  const [missions, setMissions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [showForm, setShowForm] = useState(false);
   const [callSign, setCallSign] = useState("");
   const [model, setModel] = useState("");
 
-  async function loadDrones() {
+  async function loadData() {
     try {
-      const data = await api.getDrones();
-      setDrones(data);
+      const [droneData, missionData] = await Promise.all([
+        api.getDrones(),
+        api.getMissions(),
+      ]);
+
+      setDrones(droneData);
+      setMissions(missionData);
+      setError("");
     } catch (err) {
       setError(err.message);
     } finally {
@@ -27,50 +35,65 @@ export default function Dashboard() {
   }
 
   useEffect(() => {
-    loadDrones();
+    loadData();
   }, []);
 
   async function handleAddDrone(e) {
     e.preventDefault();
+
     try {
-      await api.createDrone({ call_sign: callSign, model });
+      await api.createDrone({
+        call_sign: callSign,
+        model,
+      });
+
       setCallSign("");
       setModel("");
       setShowForm(false);
-      loadDrones();
+      loadData();
     } catch (err) {
       setError(err.message);
     }
   }
 
-  const counts = drones.reduce((acc, drone) => {
-    acc[drone.status] = (acc[drone.status] || 0) + 1;
-    return acc;
-  }, {});
+  const activeDrones = drones.filter(
+    (drone) => drone.status === "active"
+  );
 
-  if (loading) return <p className="page-message">Loading fleet...</p>;
+  const idleDrones = drones.filter(
+    (drone) => drone.status === "idle"
+  );
+
+  const activeMissions = missions.filter(
+    (mission) => mission.status === "active"
+  );
+
+  if (loading) {
+    return <p className="page-message">Loading fleet...</p>;
+  }
 
   return (
-    <div className="page">
-      <div className="page-header">
-        <h1>Fleet Dashboard</h1>
+    <div className="page dashboard-page">
+      <div className="dashboard-heading">
+        <div>
+          <p className="eyebrow">FLEET MANAGEMENT</p>
+          <h1>Fleet Dashboard</h1>
+          <p className="dashboard-subtitle">
+            Monitor your drones and mission activity.
+          </p>
+        </div>
+
         {operator && (
-          <button onClick={() => setShowForm((prev) => !prev)}>
+          <button
+            className="add-drone-button"
+            onClick={() => setShowForm((prev) => !prev)}
+          >
             {showForm ? "Cancel" : "+ Add Drone"}
           </button>
         )}
       </div>
 
       {error && <p className="error-text">{error}</p>}
-
-      <div className="summary-bar">
-        {Object.entries(counts).map(([status, count]) => (
-          <span key={status} className="summary-pill">
-            {status.replace("_", " ")}: {count}
-          </span>
-        ))}
-        {drones.length === 0 && <span>No drones yet</span>}
-      </div>
 
       {showForm && (
         <form onSubmit={handleAddDrone} className="inline-form">
@@ -80,20 +103,133 @@ export default function Dashboard() {
             onChange={(e) => setCallSign(e.target.value)}
             required
           />
+
           <input
             placeholder="Model (e.g. Skyhawk X200)"
             value={model}
             onChange={(e) => setModel(e.target.value)}
             required
           />
-          <button type="submit">Save</button>
+
+          <button type="submit">Save Drone</button>
         </form>
       )}
 
-      <div className="drone-grid">
-        {drones.map((drone) => (
-          <DroneCard key={drone.id} drone={drone} />
-        ))}
+      <section className="dashboard-stats">
+        <div className="stat-card">
+          <span className="stat-label">Total Drones</span>
+          <strong className="stat-value">{drones.length}</strong>
+          <span className="stat-description">Registered in fleet</span>
+        </div>
+
+        <div className="stat-card">
+          <span className="stat-label">Active Drones</span>
+          <strong className="stat-value">{activeDrones.length}</strong>
+          <span className="stat-description">Currently active</span>
+        </div>
+
+        <div className="stat-card">
+          <span className="stat-label">Idle Drones</span>
+          <strong className="stat-value">{idleDrones.length}</strong>
+          <span className="stat-description">Available in fleet</span>
+        </div>
+
+        <div className="stat-card">
+          <span className="stat-label">Active Missions</span>
+          <strong className="stat-value">{activeMissions.length}</strong>
+          <span className="stat-description">Currently in progress</span>
+        </div>
+      </section>
+
+      <section className="dashboard-section">
+        <div className="section-heading">
+          <div>
+            <h2>Fleet Overview</h2>
+            <p>Your registered aircraft and current status.</p>
+          </div>
+          <span className="section-count">{drones.length} drones</span>
+        </div>
+
+        {drones.length === 0 ? (
+          <p className="page-message">
+            No drones registered yet. Add your first drone to get started.
+          </p>
+        ) : (
+          <div className="drone-grid">
+            {drones.map((drone) => (
+              <DroneCard key={drone.id} drone={drone} />
+            ))}
+          </div>
+        )}
+      </section>
+
+      <div className="dashboard-lower-grid">
+        <section className="dashboard-panel">
+          <div className="section-heading">
+            <div>
+              <h2>Fleet Coordinates</h2>
+              <p>Current drone positions.</p>
+            </div>
+          </div>
+
+          <div className="fleet-coordinate-list">
+            {drones.length === 0 ? (
+              <p className="page-message">No drone positions available.</p>
+            ) : (
+              drones.map((drone) => (
+                <Link
+                  to={`/drones/${drone.id}`}
+                  className="coordinate-item"
+                  key={drone.id}
+                >
+                  <span className="coordinate-indicator" />
+                  <span className="coordinate-drone">
+                    {drone.call_sign}
+                  </span>
+                  <span className="coordinate-value">
+                    ({Number(drone.pos_x).toFixed(2)},{" "}
+                    {Number(drone.pos_y).toFixed(2)})
+                  </span>
+                </Link>
+              ))
+            )}
+          </div>
+        </section>
+
+        <section className="dashboard-panel">
+          <div className="section-heading">
+            <div>
+              <h2>Mission Tracking</h2>
+              <p>Latest fleet mission activity.</p>
+            </div>
+            <Link to="/missions" className="section-link">
+              View all
+            </Link>
+          </div>
+
+          {missions.length === 0 ? (
+            <p className="page-message">
+              No missions have been dispatched yet.
+            </p>
+          ) : (
+            <div className="mission-list">
+              {missions.slice(0, 4).map((mission) => (
+                <div className="mission-item" key={mission.id}>
+                  <div className="mission-info">
+                    <strong>{mission.title}</strong>
+                    <span>{mission.call_sign}</span>
+                    <span>
+                      Destination: ({mission.destination_x},{" "}
+                      {mission.destination_y})
+                    </span>
+                  </div>
+
+                  <StatusBadge status={mission.status} />
+                </div>
+              ))}
+            </div>
+          )}
+        </section>
       </div>
     </div>
   );
