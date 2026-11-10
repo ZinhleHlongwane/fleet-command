@@ -37,6 +37,11 @@ I intentionally used raw SQL instead of an ORM so I could keep the database inte
 - 🧭 Track drone grid positions
 - 📊 View telemetry history for each drone
 - 🔄 Recall drones back to base
+- 🖥️ Monitor fleet activity through a central dashboard
+- 🗺️ View drone positions on a tactical fleet map using operational grid coordinates
+- 🔎 Open individual drone detail pages with battery, position, home base and last-seen information
+- 📋 Review mission history and recent telemetry for individual drones
+- 🔒 Access protected operator actions through authenticated routes
 
 ## How it fits together
 
@@ -72,6 +77,38 @@ flowchart LR
 | **API style** | REST |
 | **Testing** | Node.js built-in test runner, Supertest |
 | **Development** | TypeScript, tsx, nodemon |
+
+## Frontend application
+
+The React frontend provides the operator interface for managing and monitoring the fleet.
+
+### Dashboard
+
+The dashboard brings the main fleet information together:
+
+- Fleet summary cards showing total, active and idle drones, plus active missions
+- Fleet overview with individual drone cards
+- Tactical fleet map showing drone positions on an operational grid
+- Mission tracking panel showing recent mission activity
+
+### Drone details
+
+Each drone has its own detail page containing:
+
+- Aircraft identity, model and current status
+- Battery level and operational position
+- Registered home base and last-seen timestamp
+- Mission history for that drone
+- Recent telemetry readings
+- Operator actions to recall or remove a drone
+
+### Other application pages
+
+- **Missions:** View and manage dispatched missions.
+- **Login and registration:** Authenticate operators.
+- **Protected routes:** Restrict operator-only actions to authenticated users.
+
+The tactical map currently uses the drones' stored grid coordinates. It is not GPS tracking or a live WebSocket feed.
 
 ## Run it
 
@@ -181,10 +218,23 @@ fleet-command/
 │
 └── frontend/
     └── src/
-        ├── api/           frontend API calls
-        ├── context/       authentication context
-        ├── components/    reusable UI components
-        └── pages/         application pages
+        ├── api/
+        │   └── client.js              API client
+        ├── components/
+        │   ├── BatteryBadge.jsx       battery indicator
+        │   ├── DroneCard.jsx          fleet drone card
+        │   ├── FleetMap.jsx           tactical fleet map
+        │   ├── Navbar.jsx             application navigation
+        │   ├── ProtectedRoute.jsx     authenticated route guard
+        │   └── StatusBadge.jsx        status indicator
+        ├── context/
+        │   └── AuthContext.jsx        operator authentication state
+        └── pages/
+            ├── Dashboard.jsx          fleet dashboard
+            ├── DroneDetail.jsx        individual drone details
+            ├── Login.jsx              operator login
+            ├── Missions.jsx            mission management
+            └── Register.jsx            operator registration
 ```
 
 ## API
@@ -358,7 +408,7 @@ This is one of the first security improvements I plan to make.
 - [ ] Add WebSockets for live telemetry
 - [ ] Add operator and admin roles
 - [ ] Add pagination to missions and telemetry
-- [ ] Add a live map view
+- [x] Add a tactical fleet map using operational grid coordinates
 - [ ] Deploy the frontend and backend
 
 ## License
